@@ -1,88 +1,78 @@
--- Settings
-local Hotkey = "t"
-
+-- Debug: Full color detection
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
-local Enabled = false
-local RightClickHeld = false
+local gui = Instance.new("ScreenGui")
+gui.Parent = game.CoreGui
 
-local EnemyColor = BrickColor.new("Bright red")
-
-Mouse.KeyDown:Connect(function(key)
-    if key:lower() == Hotkey:lower() then
-        Enabled = not Enabled
-        print("Autotrigger:", Enabled and "ON" or "OFF")
-    end
-end)
-
-UserInputService.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        RightClickHeld = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        RightClickHeld = false
-    end
-end)
-
-local function getCharacterModel(target)
-    if not target then return nil end
-    local model = target.Parent
-    for i = 1, 10 do
-        if model and model:FindFirstChild("Humanoid") then
-            return model
-        end
-        if model then
-            model = model.Parent
-        end
-    end
-    return nil
-end
-
-local function getBodyColor(model)
-    local bodyColors = model:FindFirstChildOfClass("BodyColors")
-    if bodyColors then
-        return bodyColors.TorsoColor
-    end
-    local torso = model:FindFirstChild("Torso") or model:FindFirstChild("UpperTorso")
-    if torso then
-        return torso.BrickColor
-    end
-    return nil
-end
-
-local function isEnemy(model)
-    if not model then return false end
-    local humanoid = model:FindFirstChildOfClass("Humanoid")
-    if not humanoid or humanoid.Health <= 0 then return false end
-    
-    local player = Players:GetPlayerFromCharacter(model)
-    if player then return false end
-    
-    local bodyColor = getBodyColor(model)
-    if bodyColor == EnemyColor then
-        return true
-    end
-    
-    return false
-end
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(0, 500, 0, 400)
+label.Position = UDim2.new(0.5, -250, 0.5, -200)
+label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+label.BackgroundTransparency = 0.3
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.Font = Enum.Font.Code
+label.TextSize = 14
+label.TextXAlignment = Enum.TextXAlignment.Left
+label.TextYAlignment = Enum.TextYAlignment.Top
+label.Text = "Aim at any character..."
+label.Parent = gui
 
 RunService.RenderStepped:Connect(function()
-    if Enabled and RightClickHeld then
-        local target = Mouse.Target
-        local model = getCharacterModel(target)
-        
-        if isEnemy(model) then
-            mouse1click()
+    local target = Mouse.Target
+    if target then
+        local model = target.Parent
+        for i = 1, 10 do
+            if model and model:FindFirstChild("Humanoid") then
+                local humanoid = model:FindFirstChildOfClass("Humanoid")
+                local player = Players:GetPlayerFromCharacter(model)
+                
+                local txt = "=== CHARACTER ===\n"
+                txt = txt .. "Name: " .. model.Name .. "\n"
+                txt = txt .. "Is Player: " .. tostring(player ~= nil) .. "\n"
+                txt = txt .. "Health: " .. humanoid.Health .. "\n\n"
+                
+                local bodyColors = model:FindFirstChildOfClass("BodyColors")
+                if bodyColors then
+                    txt = txt .. "--- BodyColors ---\n"
+                    txt = txt .. "HeadColor: " .. tostring(bodyColors.HeadColor) .. "\n"
+                    txt = txt .. "TorsoColor: " .. tostring(bodyColors.TorsoColor) .. "\n"
+                    txt = txt .. "LeftArmColor: " .. tostring(bodyColors.LeftArmColor) .. "\n"
+                    txt = txt .. "RightArmColor: " .. tostring(bodyColors.RightArmColor) .. "\n"
+                    txt = txt .. "LeftLegColor: " .. tostring(bodyColors.LeftLegColor) .. "\n"
+                    txt = txt .. "RightLegColor: " .. tostring(bodyColors.RightLegColor) .. "\n"
+                else
+                    txt = txt .. "No BodyColors\n"
+                end
+                
+                local torso = model:FindFirstChild("Torso")
+                local upperTorso = model:FindFirstChild("UpperTorso")
+                if torso then
+                    txt = txt .. "\n--- Torso ---\n"
+                    txt = txt .. "BrickColor: " .. tostring(torso.BrickColor) .. "\n"
+                    txt = txt .. "Color (RGB): " .. tostring(torso.Color) .. "\n"
+                elseif upperTorso then
+                    txt = txt .. "\n--- UpperTorso ---\n"
+                    txt = txt .. "BrickColor: " .. tostring(upperTorso.BrickColor) .. "\n"
+                    txt = txt .. "Color (RGB): " .. tostring(upperTorso.Color) .. "\n"
+                end
+                
+                if player then
+                    txt = txt .. "\n--- Player Info ---\n"
+                    txt = txt .. "Team: " .. tostring(player.Team) .. "\n"
+                    txt = txt .. "TeamColor: " .. tostring(player.TeamColor) .. "\n"
+                end
+                
+                label.Text = txt
+                return
+            end
+            if model then model = model.Parent end
         end
+        label.Text = "No Humanoid found"
+    else
+        label.Text = "No target"
     end
 end)
-
-print("Script loaded! Press T to toggle, hold right click to shoot.")
