@@ -1,7 +1,6 @@
 -- Settings
 local Hotkey = "t"
 local HotkeyToggle = true
-local DummyColor = BrickColor.new("Medium stone grey") -- Change to match dummy color
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -52,13 +51,16 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
     end
 end)
 
-local function isDummy(model)
-    local bodyColors = model:FindFirstChildOfClass("BodyColors")
-    if bodyColors then
-        return bodyColors.HeadColor == DummyColor or 
-               bodyColors.LeftLegColor == DummyColor or
-               bodyColors.TorsoColor == DummyColor
+local function isRealPlayer(model)
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return false end
+    
+    local rootPart = model:FindFirstChild("HumanoidRootPart")
+    if rootPart then
+        local player = Players:GetPlayerFromCharacter(model)
+        return player ~= nil
     end
+    
     return false
 end
 
@@ -68,7 +70,7 @@ RunService.RenderStepped:Connect(function()
             local TargetModel = Mouse.Target.Parent
             local Humanoid = TargetModel:FindFirstChild("Humanoid")
             
-            if Humanoid and Humanoid.Health > 0 and isDummy(TargetModel) then
+            if Humanoid and Humanoid.Health > 0 and not isRealPlayer(TargetModel) then
                 if HoldClick then
                     if not CurrentlyPressed then
                         CurrentlyPressed = true
