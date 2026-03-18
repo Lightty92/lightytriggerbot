@@ -6,7 +6,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
 
 local Enabled = false
 local RightClickHeld = false
@@ -30,9 +30,9 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
-local function getCharacterFromPart(part)
-    if not part then return nil end
-    local model = part.Parent
+local function getCharacterModel(target)
+    if not target then return nil end
+    local model = target.Parent
     for i = 1, 10 do
         if model and model:FindFirstChild("Humanoid") then
             return model
@@ -44,26 +44,26 @@ local function getCharacterFromPart(part)
     return nil
 end
 
+local function canShoot(model)
+    if not model then return false end
+    local humanoid = model:FindFirstChild("Humanoid")
+    if not humanoid or humanoid.Health <= 0 then return false end
+    
+    local player = Players:GetPlayerFromCharacter(model)
+    if player then
+        if player.Team == LocalPlayer.Team then return false end
+    end
+    
+    return true
+end
+
 RunService.RenderStepped:Connect(function()
     if Enabled and RightClickHeld then
-        local ray = Camera:ViewportPointToRay(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-        local params = RaycastParams.new()
-        params.FilterType = Enum.RaycastFilterType.Exclude
-        params.FilterDescendantsInstances = {LocalPlayer.Character}
+        local target = Mouse.Target
+        local model = getCharacterModel(target)
         
-        local result = workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
-        
-        if result then
-            local model = getCharacterFromPart(result.Instance)
-            if model then
-                local humanoid = model:FindFirstChild("Humanoid")
-                if humanoid and humanoid.Health > 0 then
-                    local player = Players:GetPlayerFromCharacter(model)
-                    if not player or player.Team ~= LocalPlayer.Team then
-                        mouse1click()
-                    end
-                end
-            end
+        if canShoot(model) then
+            mouse1click()
         end
     end
 end)
