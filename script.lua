@@ -51,21 +51,26 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
     end
 end)
 
-local function isClassicAvatar(model)
+local function isValidTarget(model)
     local humanoid = model:FindFirstChildOfClass("Humanoid")
-    if humanoid and humanoid.RigType == Enum.HumanoidRigType.R6 then
-        return true
+    if not humanoid then return false end
+    if humanoid.RigType ~= Enum.HumanoidRigType.R6 then return false end
+    if humanoid.Health <= 0 then return false end
+    
+    local targetPlayer = Players:GetPlayerFromCharacter(model)
+    if targetPlayer then
+        if targetPlayer.Team == LocalPlayer.Team then return false end
     end
-    return false
+    
+    return true
 end
 
 RunService.RenderStepped:Connect(function()
     if Enabled and RightClickHeld then
         if Mouse.Target and Mouse.Target.Parent:FindFirstChild("Humanoid") then
             local TargetModel = Mouse.Target.Parent
-            local Humanoid = TargetModel:FindFirstChild("Humanoid")
             
-            if Humanoid and Humanoid.Health > 0 and isClassicAvatar(TargetModel) then
+            if isValidTarget(TargetModel) then
                 if HoldClick then
                     if not CurrentlyPressed then
                         CurrentlyPressed = true
