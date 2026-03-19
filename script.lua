@@ -13,9 +13,9 @@ local Mouse = LocalPlayer:GetMouse()
 
 local Enabled = false
 local RightClickHeld = false
-local RightClickStartTime = 0
+local RightClickTime = 0
 local LastShot = 0
-local Cooldown = 0.35
+local Cooldown = 0.25
 
 -- Hotkey Toggle
 Mouse.KeyDown:Connect(function(key)
@@ -29,7 +29,7 @@ end)
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         RightClickHeld = true
-        RightClickStartTime = tick()
+        RightClickTime = tick()
     end
 end)
 
@@ -63,16 +63,7 @@ local function isEnemy(model)
     local player = Players:GetPlayerFromCharacter(model)
     if player and player.Team == LocalPlayer.Team then return false end
     
-    local parent = model.Parent
-    if parent and parent.Name == "Ragdolls" then return true end
-    
-    return false
-end
-
--- Check if Fully Scoped
-local function isFullyScoped()
-    local holdTime = tick() - RightClickStartTime
-    return holdTime >= 0.2
+    return true
 end
 
 -- Main Loop
@@ -89,7 +80,8 @@ RunService.RenderStepped:Connect(function()
     if not model then return end
     
     if isEnemy(model) then
-        if isFullyScoped() then
+        local scopeTime = tick() - RightClickTime
+        if scopeTime >= 0.2 then
             mouse1click()
             LastShot = currentTime
         end
