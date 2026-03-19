@@ -14,7 +14,7 @@ local Camera = Workspace.CurrentCamera
 local Enabled = false
 local RightClickHeld = false
 local LastShot = 0
-local MinRange = 100
+local MinRange = 90
 local MaxRange = 3
 
 -- Hotkey Toggle
@@ -125,5 +125,5 @@ RunService.RenderStepped:Connect(function()
 end)
 
 print("Autotrigger loaded! Press T to toggle, hold right click to shoot.")
-print("Only works when enemy is FAR (>100 studs)")
+print("Only works when enemy is FAR (>90 studs)")
 print("Won't work when enemy is CLOSE (<3 studs)")
