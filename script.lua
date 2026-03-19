@@ -222,37 +222,11 @@ do
 
     InvokeEvent = hookfunction(Signals.invoke, function(...)
         local Arguments = { ... };
-
-        if not ToggleEnabled or not RightClickHeld then
-            return InvokeEvent(table.unpack(Arguments));
-        end
-
-        local ClosestTarget = Targets:GetClosestTarget(300);
-        local Origin, LookVector = Arguments[2], Arguments[3];
-        
-        if (typeof(Origin) == "Vector3" and typeof(LookVector) == "Vector3") and ClosestTarget then
-            local HitPart = Targets:GetTargetPart(ClosestTarget)
-
-            if HitPart and HitPart:IsA("BasePart") then
-                local StaticData = Arguments[4];
-
-                if StaticData then
-                    local EndPosition = HitPart.Position;
-                    local NewOrigin = EndPosition + Vector3.new(0, 1.3, 0);
-
-                    Arguments[2] = NewOrigin;
-                    Arguments[3] = (EndPosition - NewOrigin).Unit * (StaticData.velocity * 2);
-                end
-            end
-        end
-    
         return InvokeEvent(table.unpack(Arguments));
     end)
 end
 
-print("Aim Assist loaded!")
+print("Soft Aimbot loaded!")
 print("Press T to toggle")
-print("Hold right click to activate")
-print("- Soft aim + Silent aim")
-print("- No teammates")
+print("Hold right click to aim")
 ]=])
