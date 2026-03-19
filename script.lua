@@ -14,7 +14,8 @@ local Camera = Workspace.CurrentCamera
 local Enabled = false
 local RightClickHeld = false
 local LastShot = 0
-local MinDistance = 100
+local MinRange = 100
+local MaxRange = 30
 
 -- Hotkey Toggle
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -69,11 +70,18 @@ local function isCentered(screenPos)
     return distance < 30
 end
 
--- Check if Too Close
+-- Check if In Range (only works when enemy is FAR)
+local function isInRange(targetPosition)
+    local origin = Camera.CFrame.Position
+    local distance = (targetPosition - origin).Magnitude
+    return distance >= MinRange
+end
+
+-- Check if Too Close (won't work if close)
 local function isTooClose(targetPosition)
     local origin = Camera.CFrame.Position
     local distance = (targetPosition - origin).Magnitude
-    return distance < MinDistance
+    return distance < MaxRange
 end
 
 -- Main Loop
@@ -101,7 +109,7 @@ RunService.RenderStepped:Connect(function()
             for i = 1, 10 do
                 if targetPart and targetPart:FindFirstChildOfClass("Humanoid") then
                     if isTargetVisible(targetPos) and isCentered(screenPos) then
-                        if not isTooClose(targetPos) then
+                        if isInRange(targetPos) and not isTooClose(targetPos) then
                             mouse1click()
                             LastShot = currentTime
                         end
@@ -117,4 +125,5 @@ RunService.RenderStepped:Connect(function()
 end)
 
 print("Autotrigger loaded! Press T to toggle, hold right click to shoot.")
-print("Min Distance: " .. MinDistance .. " studs")
+print("Only works when enemy is FAR (>100 studs)")
+print("Won't work when enemy is CLOSE (<30 studs)")
