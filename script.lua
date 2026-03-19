@@ -1,5 +1,6 @@
 -- Settings
 local Hotkey = "t"
+local HotkeyToggle = true
 
 -- Services
 local Players = game:GetService("Players")
@@ -10,16 +11,16 @@ local Workspace = game:GetService("Workspace")
 -- Variables
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
+local Camera = Workspace.CurrentCamera
 
 local Enabled = false
 local RightClickHeld = false
-local RightClickTime = 0
-local LastShot = 0
-local Cooldown = 0.25
+local Smoothness = 0.02
 
 -- Hotkey Toggle
 Mouse.KeyDown:Connect(function(key)
-    if key:lower() == Hotkey:lower() then
+    key = key:lower()
+    if key == Hotkey:lower() then
         Enabled = not Enabled
         print("Triggerbot:", Enabled and "ON" or "OFF")
     end
@@ -29,7 +30,6 @@ end)
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         RightClickHeld = true
-        RightClickTime = tick()
     end
 end)
 
@@ -63,15 +63,23 @@ local function isEnemy(model)
     local player = Players:GetPlayerFromCharacter(model)
     if player and player.Team == LocalPlayer.Team then return false end
     
-    return true
+    local parent = model.Parent
+    if parent and parent.Name == "Ragdolls" then return true end
+    
+    return false
+end
+
+-- Smooth Click
+local function smoothClick()
+    local delay = math.random(15, 45) / 1000
+    task.delay(delay, function()
+        mouse1click()
+    end)
 end
 
 -- Main Loop
 RunService.RenderStepped:Connect(function()
     if not Enabled or not RightClickHeld then return end
-    
-    local currentTime = tick()
-    if currentTime - LastShot < Cooldown then return end
     
     local target = Mouse.Target
     if not target then return end
@@ -80,11 +88,7 @@ RunService.RenderStepped:Connect(function()
     if not model then return end
     
     if isEnemy(model) then
-        local scopeTime = tick() - RightClickTime
-        if scopeTime >= 0.2 then
-            mouse1click()
-            LastShot = currentTime
-        end
+        smoothClick()
     end
 end)
 
