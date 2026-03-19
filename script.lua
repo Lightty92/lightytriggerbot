@@ -14,7 +14,7 @@ local Camera = Workspace.CurrentCamera
 local Enabled = false
 local RightClickHeld = false
 local LastShot = 0
-local Delay = 0.14
+local Delay = 0.15
 
 -- Hotkey Toggle
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
