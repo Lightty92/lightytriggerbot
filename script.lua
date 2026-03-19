@@ -14,7 +14,7 @@ local Camera = Workspace.CurrentCamera
 local Enabled = false
 local RightClickHeld = false
 local LastShot = 0
-local Delay = 0.15
+local Delay = 0.14
 
 -- Hotkey Toggle
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -55,6 +55,13 @@ local function isTargetVisible(targetPosition)
     return true
 end
 
+-- Check if Centered on Screen
+local function isCentered(screenPos)
+    local center = Camera.ViewportSize / 2
+    local distance = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+    return distance < 30
+end
+
 -- Main Loop
 RunService.RenderStepped:Connect(function()
     if Enabled and RightClickHeld then
@@ -74,9 +81,11 @@ RunService.RenderStepped:Connect(function()
             local targetPart = result.Instance
             local targetPos = result.Position
             
+            local screenPos = Camera:WorldToViewportPoint(targetPos)
+            
             for i = 1, 10 do
                 if targetPart and targetPart:FindFirstChildOfClass("Humanoid") then
-                    if isTargetVisible(targetPos) then
+                    if isTargetVisible(targetPos) and isCentered(screenPos) then
                         mouse1click()
                         LastShot = currentTime
                     end
@@ -89,5 +98,3 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-
-print("Autotrigger loaded! Press T to toggle, hold right click to shoot.")
