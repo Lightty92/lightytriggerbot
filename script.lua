@@ -9,15 +9,14 @@ local Workspace = game:GetService("Workspace")
 
 -- Variables
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 local Camera = Workspace.CurrentCamera
 
 local Enabled = false
 local RightClickHeld = false
 
 -- Hotkey Toggle
-Mouse.KeyDown:Connect(function(key)
-    if key:lower() == Hotkey:lower() then
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.T then
         Enabled = not Enabled
         print("Autotrigger:", Enabled and "ON" or "OFF")
     end
@@ -36,37 +35,28 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Get Character Model
-local function getCharacterModel(target)
-    if not target then return nil end
-    local model = target.Parent
-    for i = 1, 10 do
-        if model and model:FindFirstChildOfClass("Humanoid") then
-            return model
-        end
-        if model then
-            model = model.Parent
-        end
-    end
-    return nil
-end
-
--- Check if Enemy
-local function isEnemy(model)
-    if not model then return false end
-    local humanoid = model:FindFirstChildOfClass("Humanoid")
-    if not humanoid or humanoid.Health <= 0 then return false end
-    return true
-end
-
 -- Main Loop
 RunService.RenderStepped:Connect(function()
     if Enabled and RightClickHeld then
-        local target = Mouse.Target
-        if target then
-            local model = getCharacterModel(target)
-            if model and isEnemy(model) then
-                mouse1click()
+        local ray = Camera:ViewportPointToRay(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        local params = RaycastParams.new()
+        params.FilterType = Enum.RaycastFilterType.Exclude
+        if LocalPlayer.Character then
+            params.FilterDescendantsInstances = {LocalPlayer.Character}
+        end
+        
+        local result = Workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
+        
+        if result then
+            local model = result.Instance
+            for i = 1, 10 do
+                if model and model:FindFirstChildOfClass("Humanoid") then
+                    mouse1click()
+                    break
+                end
+                if model then
+                    model = model.Parent
+                end
             end
         end
     end
