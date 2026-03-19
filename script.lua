@@ -14,7 +14,6 @@ local Camera = Workspace.CurrentCamera
 local Enabled = false
 local RightClickHeld = false
 local LastShot = 0
-local Delay = 0.14
 
 -- Hotkey Toggle
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -36,6 +35,13 @@ UserInputService.InputEnded:Connect(function(input)
         RightClickHeld = false
     end
 end)
+
+-- Get Ping-based Delay
+local function getDelay()
+    local ping = LocalPlayer:GetNetworkPing()
+    ping = math.clamp(ping * 1000, 30, 150)
+    return ping / 1000
+end
 
 -- Wall Check (Anti-Wallbang)
 local function isTargetVisible(targetPosition)
@@ -66,6 +72,7 @@ end
 RunService.RenderStepped:Connect(function()
     if Enabled and RightClickHeld then
         local currentTime = tick()
+        local Delay = getDelay()
         if currentTime - LastShot < Delay then return end
         
         local ray = Camera:ViewportPointToRay(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
