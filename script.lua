@@ -14,6 +14,7 @@ local Camera = Workspace.CurrentCamera
 local Enabled = false
 local RightClickHeld = false
 local LastShot = 0
+local MinDistance = 3
 
 -- Hotkey Toggle
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -68,6 +69,13 @@ local function isCentered(screenPos)
     return distance < 30
 end
 
+-- Check if Within Distance
+local function isWithinDistance(targetPosition)
+    local origin = Camera.CFrame.Position
+    local distance = (targetPosition - origin).Magnitude
+    return distance < MinDistance
+end
+
 -- Main Loop
 RunService.RenderStepped:Connect(function()
     if Enabled and RightClickHeld then
@@ -92,7 +100,7 @@ RunService.RenderStepped:Connect(function()
             
             for i = 1, 10 do
                 if targetPart and targetPart:FindFirstChildOfClass("Humanoid") then
-                    if isTargetVisible(targetPos) and isCentered(screenPos) then
+                    if isTargetVisible(targetPos) and isCentered(screenPos) and not isWithinDistance(targetPos) then
                         mouse1click()
                         LastShot = currentTime
                     end
