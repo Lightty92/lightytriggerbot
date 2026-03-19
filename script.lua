@@ -7,7 +7,6 @@ end
 local PlayerService = GetService("Players");
 local Workspace = GetService("Workspace");
 local UserInputService = GetService("UserInputService");
-local RunService = GetService("RunService");
 
 -- Variables
 local Camera = Workspace.CurrentCamera;
@@ -195,34 +194,6 @@ local Targets = { }; do
     end
 end
 
--- Legit offsets
-local function GetLegitOffset(Part, Origin)
-    local partSize = Part.Size
-    local offsetX = (math.random() - 0.5) * partSize.X * 0.6
-    local offsetY = (math.random() - 0.5) * partSize.Y * 0.6
-    local offsetZ = (math.random() - 0.5) * partSize.Z * 0.6
-    
-    local randomOffset = Vector3.new(offsetX, offsetY, offsetZ)
-    local targetPos = Part.Position + randomOffset
-    
-    -- Add slight delay randomization
-    local delayTime = math.random(5, 25) / 1000
-    
-    return targetPos, delayTime
-end
-
-local PendingShots = {}
-
-RunService.Heartbeat:Connect(function()
-    for i = #PendingShots, 1, -1 do
-        local shot = PendingShots[i]
-        if tick() >= shot.fireTime then
-            shot.callback()
-            table.remove(PendingShots, i)
-        end
-    end
-end)
-
 -- Modules
 local Signals = Modules:Get("signals");
 
@@ -255,23 +226,12 @@ do
                 local StaticData = Arguments[4];
 
                 if StaticData then
-                    local EndPosition, delayTime = GetLegitOffset(HitPart, Origin)
-                    local NewOrigin = EndPosition + Vector3.new(0, 1.3, 0)
-                    
-                    -- Slight velocity variation (98-102%)
-                    local velocityMult = 0.98 + (math.random() * 0.04)
-                    local newVelocity = (EndPosition - NewOrigin).Unit * (StaticData.velocity * velocityMult)
-                    
-                    table.insert(PendingShots, {
-                        fireTime = tick() + delayTime,
-                        args = Arguments,
-                        endPos = EndPosition,
-                        newOrigin = NewOrigin,
-                        newVelocity = newVelocity
-                    })
-                    
+                    local EndPosition = HitPart.Position;
+                    local NewOrigin = EndPosition + Vector3.new(0, 1.3, 0);
+                    local velocityMult = 0.99 + (math.random() * 0.02)
+
                     Arguments[2] = NewOrigin;
-                    Arguments[3] = newVelocity;
+                    Arguments[3] = (EndPosition - NewOrigin).Unit * (StaticData.velocity * velocityMult);
                 end
             end
         end
