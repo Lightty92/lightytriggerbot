@@ -7,18 +7,33 @@ end
 local PlayerService = GetService("Players");
 local Workspace = GetService("Workspace");
 local UserInputService = GetService("UserInputService");
+local RunService = GetService("RunService");
 
 -- Variables
 local Camera = Workspace.CurrentCamera;
 local LocalPlayer = PlayerService.LocalPlayer;
 
-local SilentAimEnabled = false
+local ToggleEnabled = false
+local RightClickHeld = false
 
 -- T Key Toggle
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.T then
-        SilentAimEnabled = not SilentAimEnabled
-        print("Silent Aim:", SilentAimEnabled and "ON" or "OFF")
+        ToggleEnabled = not ToggleEnabled
+        print("Aim Assist:", ToggleEnabled and "ON" or "OFF")
+    end
+end)
+
+-- Right Click Detection
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        RightClickHeld = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        RightClickHeld = false
     end
 end)
 
@@ -107,7 +122,7 @@ local Targets = { }; do
 
             local Character = Data.bodyModel;
 
-            if (not Character) or (Player == LocalPlayer) then
+            if (not Character) or (Player == LocalPlayer) or (Player.Team == LocalPlayer.Team) then
                 continue;
             end
 
@@ -154,45 +169,41 @@ local Targets = { }; do
         return Closest;
     end
 
-    function Targets:GetRandomPart(Character)
-        local parts = {}
-        
-        local bodyParts = {"head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}
-        
-        for _, partName in ipairs(bodyParts) do
-            local part = Character:FindFirstChild(partName)
-            if part and part:IsA("BasePart") then
-                table.insert(parts, part)
-            end
+    function Targets:GetTargetPart(Character)
+        local part = Character:FindFirstChild("head")
+        if part and part:IsA("BasePart") then
+            return part
         end
-        
-        if #parts == 0 then
-            return Character:FindFirstChild("head") or Character:FindFirstChild("HumanoidRootPart")
-        end
-        
-        local roll = math.random(100)
-        
-        if roll <= 10 then
-            local head = Character:FindFirstChild("head")
-            if head then
-                return head
-            end
-        end
-        
-        local otherParts = {}
-        for _, part in ipairs(parts) do
-            if part.Name ~= "head" then
-                table.insert(otherParts, part)
-            end
-        end
-        
-        if #otherParts > 0 then
-            return otherParts[math.random(#otherParts)]
-        end
-        
-        return parts[math.random(#parts)]
+        return Character:FindFirstChild("HumanoidRootPart")
     end
 end
+
+-- Soft Aimbot Settings
+local SMOOTHNESS = 0.08
+
+RunService.RenderStepped:Connect(function()
+    if not ToggleEnabled or not RightClickHeld then return end
+    
+    local ClosestTarget = Targets:GetClosestTarget(300)
+    
+    if ClosestTarget then
+        local Part = Targets:GetTargetPart(ClosestTarget)
+        if Part then
+            local ScreenPos = Camera:WorldToViewportPoint(Part.Position)
+            local Center = Camera.ViewportSize / 2
+            
+            local TargetScreenPos = Vector2.new(ScreenPos.X, ScreenPos.Y)
+            local CurrentScreenPos = Vector2.new(Center.X, Center.Y)
+            
+            local Delta = TargetScreenPos - CurrentScreenPos
+            local SmoothDelta = Delta * SMOOTHNESS
+            
+            local Mouse = LocalPlayer:GetMouse()
+            Mouse.X = Mouse.X + SmoothDelta.X
+            Mouse.Y = Mouse.Y + SmoothDelta.Y
+        end
+    end
+end)
 
 -- Modules
 local Signals = Modules:Get("signals");
@@ -212,7 +223,7 @@ do
     InvokeEvent = hookfunction(Signals.invoke, function(...)
         local Arguments = { ... };
 
-        if not SilentAimEnabled then
+        if not ToggleEnabled or not RightClickHeld then
             return InvokeEvent(table.unpack(Arguments));
         end
 
@@ -220,7 +231,7 @@ do
         local Origin, LookVector = Arguments[2], Arguments[3];
         
         if (typeof(Origin) == "Vector3" and typeof(LookVector) == "Vector3") and ClosestTarget then
-            local HitPart = Targets:GetRandomPart(ClosestTarget)
+            local HitPart = Targets:GetTargetPart(ClosestTarget)
 
             if HitPart and HitPart:IsA("BasePart") then
                 local StaticData = Arguments[4];
@@ -228,10 +239,9 @@ do
                 if StaticData then
                     local EndPosition = HitPart.Position;
                     local NewOrigin = EndPosition + Vector3.new(0, 1.3, 0);
-                    local velocityMult = 0.99 + (math.random() * 0.02)
 
                     Arguments[2] = NewOrigin;
-                    Arguments[3] = (EndPosition - NewOrigin).Unit * (StaticData.velocity * velocityMult);
+                    Arguments[3] = (EndPosition - NewOrigin).Unit * (StaticData.velocity * 2);
                 end
             end
         end
@@ -240,5 +250,9 @@ do
     end)
 end
 
-print("Silent Aim loaded! Press T to toggle.")
+print("Aim Assist loaded!")
+print("Press T to toggle")
+print("Hold right click to activate")
+print("- Soft aim + Silent aim")
+print("- No teammates")
 ]=])
