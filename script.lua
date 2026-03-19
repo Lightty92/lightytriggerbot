@@ -10,12 +10,12 @@ local Workspace = game:GetService("Workspace")
 -- Variables
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
-local Camera = Workspace.CurrentCamera
 
 local Enabled = false
 local RightClickHeld = false
+local RightClickStartTime = 0
 local LastShot = 0
-local Cooldown = 0.3
+local Cooldown = 0.35
 
 -- Hotkey Toggle
 Mouse.KeyDown:Connect(function(key)
@@ -29,6 +29,7 @@ end)
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         RightClickHeld = true
+        RightClickStartTime = tick()
     end
 end)
 
@@ -68,6 +69,12 @@ local function isEnemy(model)
     return false
 end
 
+-- Check if Fully Scoped
+local function isFullyScoped()
+    local holdTime = tick() - RightClickStartTime
+    return holdTime >= 0.2
+end
+
 -- Main Loop
 RunService.RenderStepped:Connect(function()
     if not Enabled or not RightClickHeld then return end
@@ -82,8 +89,10 @@ RunService.RenderStepped:Connect(function()
     if not model then return end
     
     if isEnemy(model) then
-        mouse1click()
-        LastShot = currentTime
+        if isFullyScoped() then
+            mouse1click()
+            LastShot = currentTime
+        end
     end
 end)
 
