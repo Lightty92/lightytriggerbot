@@ -1,6 +1,5 @@
 -- Settings
 local Hotkey = "t"
-local HotkeyToggle = true
 
 -- Services
 local Players = game:GetService("Players")
@@ -15,12 +14,12 @@ local Camera = Workspace.CurrentCamera
 
 local Enabled = false
 local RightClickHeld = false
-local Smoothness = 0.02
+local LastShot = 0
+local Cooldown = 0.3
 
 -- Hotkey Toggle
 Mouse.KeyDown:Connect(function(key)
-    key = key:lower()
-    if key == Hotkey:lower() then
+    if key:lower() == Hotkey:lower() then
         Enabled = not Enabled
         print("Triggerbot:", Enabled and "ON" or "OFF")
     end
@@ -69,17 +68,12 @@ local function isEnemy(model)
     return false
 end
 
--- Smooth Click
-local function smoothClick()
-    local delay = math.random(15, 45) / 1000
-    task.delay(delay, function()
-        mouse1click()
-    end)
-end
-
 -- Main Loop
 RunService.RenderStepped:Connect(function()
     if not Enabled or not RightClickHeld then return end
+    
+    local currentTime = tick()
+    if currentTime - LastShot < Cooldown then return end
     
     local target = Mouse.Target
     if not target then return end
@@ -88,7 +82,8 @@ RunService.RenderStepped:Connect(function()
     if not model then return end
     
     if isEnemy(model) then
-        smoothClick()
+        mouse1click()
+        LastShot = currentTime
     end
 end)
 
